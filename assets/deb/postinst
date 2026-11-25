@@ -1,0 +1,31 @@
+#!/bin/sh
+# 安装或升级后，为本机已有用户启用 GNOME Shell 扩展，并清掉用户目录里旧的扩展副本
+# （用户级副本会盖住 /usr/share 里的系统级扩展）。用户只需重新登录一次。
+# 没有 GNOME Shell 的机器上什么都不做；任何一步失败都不应让安装失败。
+set -e
+
+if [ "$1" = configure ] && command -v gnome-shell >/dev/null 2>&1 \
+    && command -v runuser >/dev/null 2>&1; then
+  getent passwd | while IFS=: read -r user _ uid _ _ home shell; do
+    case "$uid" in '' | *[!0-9]*) continue ;; esac
+    [ "$uid" -ge 1000 ] && [ "$uid" -lt 60000 ] || continue
+    [ -d "$home" ] || continue
+    case "$shell" in */nologin | */false) continue ;; esac
+
+    # 复用 `sash install-extension`：有系统级扩展时，它删除用户级副本，并把扩展写进
+    # enabled-extensions。
+    bus="/run/user/$uid/bus"
+    if [ -S "$bus" ]; then
+      # 用户正登录着：写进他正在运行的会话。
+      runuser -u "$user" -- env -u XDG_DATA_HOME HOME="$home" \
+        XDG_RUNTIME_DIR="/run/user/$uid" DBUS_SESSION_BUS_ADDRESS="unix:path=$bus" \
+        timeout 30 /usr/bin/sash install-extension >/dev/null 2>&1 || true
+    elif command -v dbus-run-session >/dev/null 2>&1; then
+      # 用户没登录：用一个临时会话总线，让 dconf 把设置写进他的配置文件。
+      runuser -u "$user" -- env -u XDG_DATA_HOME HOME="$home" \
+        timeout 30 dbus-run-session -- /usr/bin/sash install-extension >/dev/null 2>&1 || true
+    fi
+  done || true
+fi
+
+exit 0

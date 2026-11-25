@@ -1,0 +1,7 @@
+{
+  "uuid": "sash@sash.local",
+  "name": "Sash",
+  "description": "Window snapping backend for Sash. Lets the sash program move windows, grab global shortcuts and watch window drags on GNOME Wayland.",
+  "shell-version": ["50"],
+  "session-modes": ["user", "unlock-dialog"]
+}

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1024 1024">
+  <defs>
+    <g id="window">
+      <rect width="360" height="360" rx="48" fill="#f7f9ff"/>
+      <path d="M0 48A48 48 0 0 1 48 0H312A48 48 0 0 1 360 48V84H0Z" fill="#cdd8fb"/>
+      <circle cx="44" cy="42" r="13" fill="#2457e6" opacity="0.7"/>
+      <circle cx="82" cy="42" r="13" fill="#2457e6" opacity="0.45"/>
+      <circle cx="120" cy="42" r="13" fill="#2457e6" opacity="0.25"/>
+      <rect x="36" y="130" width="230" height="20" rx="10" fill="#2457e6" opacity="0.16"/>
+      <rect x="36" y="176" width="170" height="20" rx="10" fill="#2457e6" opacity="0.16"/>
+      <rect x="36" y="222" width="200" height="20" rx="10" fill="#2457e6" opacity="0.16"/>
+    </g>
+  </defs>
+  <g transform="translate(143.36 143.36) scale(0.72)">
+  <rect width="1024" height="1024" rx="224" fill="#2457e6"/>
+  <use xlink:href="#window" x="128" y="128"/>
+  <use xlink:href="#window" x="536" y="128"/>
+  <use xlink:href="#window" x="128" y="536"/>
+  <use xlink:href="#window" x="536" y="536"/>
+  <rect x="330" y="344" width="400" height="400" rx="56" fill="#10245c" opacity="0.24"/>
+  <use xlink:href="#window" transform="translate(312 312) scale(1.1111)"/>
+  </g>
+</svg>

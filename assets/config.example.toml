@@ -1,0 +1,31 @@
+# Sash — copy to ~/.config/sash/config.toml and edit.
+
+# Snap windows by dragging them to screen edges and corners.
+snap_windows = true
+# Dragging a snapped window away restores the size it had before snapping.
+restore_to_original_size = true
+# Thickness in pixels of the activation strips along screen edges.
+activation_edge_width = 6
+# Scale of activation areas that do not touch a screen edge
+# (for example "Center Two Thirds" just above the bottom edge).
+activation_area_scale = 1.0
+# Margin in pixels around snapped windows.
+padding = 0
+# Do not apply the margin along screen edges.
+fit_tightly_to_screen_edges = false
+# Applications to leave alone: WM_CLASS instance or class names on Linux
+# (see `xprop WM_CLASS`), application names or bundle identifiers on macOS.
+# The macOS status menu also keeps its own list in `ignored-apps.txt`.
+ignored_apps = []
+# Keep the menu bar icon hidden (macOS). Opening the app again shows the
+# settings window.
+hide_menu_bar_icon = false
+# Replace the built-in commands; print them with `sash print-commands`.
+# commands_file = "commands.json"
+
+[highlight]
+# Preview shown while dragging. The fill needs a compositing manager;
+# without one only the outline is drawn.
+fill = "#3d8bfd55"
+outline = "#3d8bfddd"
+outline_width = 3

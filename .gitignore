@@ -1,0 +1,6 @@
+/target
+/dist
+# Local REA evidence extracted from the proprietary macOS app.
+/re
+
+.DS_Store

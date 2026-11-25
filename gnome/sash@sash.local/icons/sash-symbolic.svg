@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 18 18">
+  <!-- The macOS menu-bar icon (src/macos.rs, status_icon): a window in each corner and a
+       larger one in the middle, each a title band over a body with a thin gap between.
+       A margin around the middle window is cut out of the corner windows, so that it reads
+       as lying on top. The cut is a clip path, which the Shell's symbolic recolouring keeps. -->
+  <defs>
+    <clipPath id="margin">
+      <path clip-rule="evenodd" d="M0 0H18V18H0ZM6.6 4.4h4.8a2.2 2.2 0 0 1 2.2 2.2v4.8a2.2 2.2 0 0 1-2.2 2.2H6.6a2.2 2.2 0 0 1-2.2-2.2V6.6a2.2 2.2 0 0 1 2.2-2.2Z"/>
+    </clipPath>
+  </defs>
+  <g fill="#2e3436">
+    <g clip-path="url(#margin)">
+    <!-- top left -->
+    <path d="M0.7 2.0999999999999996a1.4 1.4 0 0 1 1.4 -1.4h4.2a1.4 1.4 0 0 1 1.4 1.4V2.7H0.7Z"/>
+    <path d="M0.7 3.6H7.7V6.3a1.4 1.4 0 0 1 -1.4 1.4H2.1a1.4 1.4 0 0 1 -1.4 -1.4Z"/>
+    <!-- top right -->
+    <path d="M10.3 2.0999999999999996a1.4 1.4 0 0 1 1.4 -1.4h4.2a1.4 1.4 0 0 1 1.4 1.4V2.7H10.3Z"/>
+    <path d="M10.3 3.6H17.3V6.3a1.4 1.4 0 0 1 -1.4 1.4H11.7a1.4 1.4 0 0 1 -1.4 -1.4Z"/>
+    <!-- bottom left -->
+    <path d="M0.7 11.700000000000001a1.4 1.4 0 0 1 1.4 -1.4h4.2a1.4 1.4 0 0 1 1.4 1.4V12.3H0.7Z"/>
+    <path d="M0.7 13.2H7.7V15.9a1.4 1.4 0 0 1 -1.4 1.4H2.1a1.4 1.4 0 0 1 -1.4 -1.4Z"/>
+    <!-- bottom right -->
+    <path d="M10.3 11.700000000000001a1.4 1.4 0 0 1 1.4 -1.4h4.2a1.4 1.4 0 0 1 1.4 1.4V12.3H10.3Z"/>
+    <path d="M10.3 13.2H17.3V15.9a1.4 1.4 0 0 1 -1.4 1.4H11.7a1.4 1.4 0 0 1 -1.4 -1.4Z"/>
+    </g>
+    <!-- middle -->
+    <path d="M5.4 7.0a1.6 1.6 0 0 1 1.6 -1.6h4a1.6 1.6 0 0 1 1.6 1.6V7.4H5.4Z"/>
+    <path d="M5.4 8.3H12.6V11a1.6 1.6 0 0 1 -1.6 1.6H7a1.6 1.6 0 0 1 -1.6 -1.6Z"/>
+  </g>
+</svg>
