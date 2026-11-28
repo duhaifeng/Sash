@@ -1,6 +1,6 @@
 [package]
-name = "sash"
-version = "0.1.0"
+name = "snapgrid"
+version = "0.1.1"
 edition = "2024"
 
 [dependencies]

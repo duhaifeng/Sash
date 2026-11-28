@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDisplayName</key>
-  <string>Sash</string>
+  <string>SnapGrid</string>
   <key>CFBundleExecutable</key>
-  <string>sash</string>
+  <string>snapgrid</string>
   <key>CFBundleIdentifier</key>
-  <string>local.sash</string>
+  <string>local.snapgrid</string>
   <key>CFBundleName</key>
-  <string>Sash</string>
+  <string>SnapGrid</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

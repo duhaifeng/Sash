@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 use crate::geometry::{Rect, roughly_same};
 
-/// Remembers each window's frame from before Sash first moved it, so that
+/// Remembers each window's frame from before SnapGrid first moved it, so that
 /// Restore and drag-to-unsnap can return to it.
 pub struct FrameMemory<W> {
     entries: HashMap<W, Entry>,
@@ -23,7 +23,7 @@ impl<W: Eq + Hash + Copy> FrameMemory<W> {
     }
 
     /// Records that `window`, currently at `current`, is being moved to `applied`.
-    /// The original frame is kept while the window stays where Sash put it;
+    /// The original frame is kept while the window stays where SnapGrid put it;
     /// once the user moves it by other means, `current` becomes the new original.
     pub fn record(&mut self, window: W, current: Rect, applied: Rect) {
         match self.entries.get_mut(&window) {
@@ -40,7 +40,7 @@ impl<W: Eq + Hash + Copy> FrameMemory<W> {
         }
     }
 
-    /// The original frame of a window that is still where Sash put it.
+    /// The original frame of a window that is still where SnapGrid put it.
     pub fn snapped_original(&self, window: W, current: Rect) -> Option<Rect> {
         self.entries
             .get(&window)

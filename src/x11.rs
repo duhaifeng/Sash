@@ -53,7 +53,7 @@ const XI_ALL_MASTER_DEVICES: xinput::DeviceId = 1;
 impl X11 {
     pub fn connect() -> anyhow::Result<Self> {
         let (conn, screen) = RustConnection::connect(None).context(
-            "cannot connect to an X server; Sash needs an X11 session (DISPLAY) or XWayland",
+            "cannot connect to an X server; SnapGrid needs an X11 session (DISPLAY) or XWayland",
         )?;
         let root = conn.setup().roots[screen].root;
         let atoms = Atoms::new(&conn)?.reply()?;
@@ -106,7 +106,7 @@ impl X11 {
         self.cardinals(self.root, self.atoms._NET_CLIENT_LIST)
     }
 
-    /// Whether the window is the desktop or a panel, which Sash never moves.
+    /// Whether the window is the desktop or a panel, which SnapGrid never moves.
     pub fn is_desktop_or_dock(&self, window: Window) -> bool {
         let types = self
             .cardinals(window, self.atoms._NET_WM_WINDOW_TYPE)
@@ -771,7 +771,7 @@ pub fn launch(config: crate::config::Config) -> anyhow::Result<()> {
     use crate::daemon::{Daemon, Input};
 
     let session = X11Session::connect(&config)?;
-    let mut daemon = Daemon::start(session, config).context("starting Sash")?;
+    let mut daemon = Daemon::start(session, config).context("starting SnapGrid")?;
     let mut hotkeys = Hotkeys::grab(&daemon.c.session.x, &daemon.c.commands.shortcuts())?;
     info!("{} shortcuts active", hotkeys.len());
     if daemon.c.config.snap_windows {

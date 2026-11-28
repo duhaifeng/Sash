@@ -61,7 +61,7 @@ pub struct MenuContext {
     pub app: Option<ActiveApp>,
 }
 
-/// Executes commands against windows; shared by the daemon and `sash apply`.
+/// Executes commands against windows; shared by the daemon and `snapgrid apply`.
 pub struct Controller<S: Session> {
     pub session: S,
     pub config: Config,
@@ -392,7 +392,7 @@ pub fn apply_command<S: Session>(session: S, config: Config, name: &str) -> anyh
         .is_none()
         && controller.commands.by_name(Axis::Vertical, name).is_none()
     {
-        anyhow::bail!("unknown command `{name}`; see `sash list`");
+        anyhow::bail!("unknown command `{name}`; see `snapgrid list`");
     }
     controller.run_on_active(|set, axis| set.by_name(axis, name))
 }

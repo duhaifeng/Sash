@@ -1,4 +1,4 @@
-//! Moves windows through the Accessibility API, so Sash can run in a normal
+//! Moves windows through the Accessibility API, so SnapGrid can run in a normal
 //! macOS session without an X server.
 
 use std::cell::{Cell, RefCell};
@@ -56,7 +56,7 @@ impl MacSession {
         ensure_trusted()?;
         let mtm = MainThreadMarker::new().context_main()?;
         let app = NSApplication::sharedApplication(mtm);
-        // Sash lives only in the menu bar, without a Dock icon.
+        // SnapGrid lives only in the menu bar, without a Dock icon.
         app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
         let overlay = overlay_window(mtm, &config.highlight);
         Ok(Self {
@@ -237,8 +237,9 @@ impl Session for MacSession {
 }
 
 pub fn launch(config: Config) -> anyhow::Result<()> {
+    login::migrate();
     let session = MacSession::connect(&config)?;
-    let mut daemon = Daemon::start(session, config).context("starting Sash")?;
+    let mut daemon = Daemon::start(session, config).context("starting SnapGrid")?;
     let shortcuts: Vec<Shortcut> = daemon.c.commands.shortcuts().into_iter().cloned().collect();
     let active = register_hotkeys(&shortcuts);
     if daemon.c.config.snap_windows {
@@ -278,7 +279,7 @@ define_class!(
     }
 
     impl AppDelegate {
-        /// Starting Sash again, from Spotlight or the Applications folder, opens
+        /// Starting SnapGrid again, from Spotlight or the Applications folder, opens
         /// the settings; this is how a hidden menu bar icon is reached.
         #[unsafe(method(applicationShouldHandleReopen:hasVisibleWindows:))]
         fn should_handle_reopen(&self, _app: &NSApplication, _visible: Bool) -> Bool {
@@ -370,7 +371,7 @@ fn install_status_item(mtm: MainThreadMarker, delegate: &AppDelegate) {
     let item = bar.statusItemWithLength(bar.thickness());
     // A stable name keeps this out of the hidden Item-N slots macOS assigns
     // to unnamed extras when the menu bar is crowded.
-    item.setAutosaveName(Some(&NSString::from_str("local.sash")));
+    item.setAutosaveName(Some(&NSString::from_str("local.snapgrid")));
     if let Some(button) = item.button(mtm) {
         button.setImage(Some(&status_icon()));
     }
@@ -381,10 +382,10 @@ fn install_status_item(mtm: MainThreadMarker, delegate: &AppDelegate) {
     STATUS.with(|slot| *slot.borrow_mut() = Some(item));
 }
 
-/// The About panel icon is `assets/sash.svg`, so the packaged app and the
+/// The About panel icon is `assets/snapgrid.svg`, so the packaged app and the
 /// running process cannot drift apart.
 fn app_icon() -> Option<Retained<NSImage>> {
-    let data = NSData::with_bytes(include_bytes!("../assets/sash.svg"));
+    let data = NSData::with_bytes(include_bytes!("../assets/snapgrid.svg"));
     NSImage::initWithData(NSImage::alloc(), &data)
 }
 
@@ -490,8 +491,10 @@ fn ensure_trusted() -> anyhow::Result<()> {
     if trusted {
         return Ok(());
     }
-    let path = std::env::current_exe()
-        .map_or_else(|_| "sash".to_string(), |path| path.display().to_string());
+    let path = std::env::current_exe().map_or_else(
+        |_| "snapgrid".to_string(),
+        |path| path.display().to_string(),
+    );
     bail!(
         "需要辅助功能权限才能移动窗口。系统设置已经打开权限面板，请允许这个程序后重新运行：\n  {path}"
     )
@@ -765,7 +768,7 @@ fn register_hotkeys(shortcuts: &[Shortcut]) -> usize {
         }
         let mut registered = std::ptr::null_mut();
         let id = EventHotKeyID {
-            signature: u32::from_be_bytes(*b"SASH"),
+            signature: u32::from_be_bytes(*b"SNAP"),
             id: index as u32,
         };
         // Exclusive registration fails when another app, such as Magnet, already

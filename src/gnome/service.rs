@@ -25,15 +25,15 @@ impl Service {
         let (reply, answer) = mpsc::sync_channel(1);
         self.events
             .send(Event::Settings(request, reply))
-            .map_err(|_| fdo::Error::Failed("Sash is shutting down".into()))?;
+            .map_err(|_| fdo::Error::Failed("SnapGrid is shutting down".into()))?;
         answer
             .recv_timeout(ANSWER_TIMEOUT)
-            .map_err(|_| fdo::Error::Failed("Sash did not answer in time".into()))?
+            .map_err(|_| fdo::Error::Failed("SnapGrid did not answer in time".into()))?
             .map_err(fdo::Error::Failed)
     }
 }
 
-#[zbus::interface(name = "local.sash.Daemon")]
+#[zbus::interface(name = "local.snapgrid.Daemon")]
 impl Service {
     /// Preferences, ignored applications and commands, as JSON.
     fn get_settings(&self) -> fdo::Result<String> {

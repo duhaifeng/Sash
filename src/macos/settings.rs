@@ -226,7 +226,7 @@ fn create(mtm: MainThreadMarker) -> Settings {
         )
     };
     unsafe { window.setReleasedWhenClosed(false) };
-    window.setTitle(&NSString::from_str("Sash"));
+    window.setTitle(&NSString::from_str("SnapGrid"));
     window.setTitleVisibility(NSWindowTitleVisibility::Hidden);
     window.setTitlebarAppearsTransparent(true);
     if let Some(zoom) = window.standardWindowButton(NSWindowButton::ZoomButton) {
@@ -667,7 +667,7 @@ fn preferences_document(s: &mut Settings, mtm: MainThreadMarker, c: &Config) -> 
 
     section(s, mtm, &document, &mut y, "General", |rows| {
         rows.switch(
-            "Add Sash to login items",
+            "Add SnapGrid to login items",
             None,
             super::login::enabled(),
             Pref::Login,
@@ -675,7 +675,7 @@ fn preferences_document(s: &mut Settings, mtm: MainThreadMarker, c: &Config) -> 
         rows.switch(
             "Hide menu bar icon",
             Some(
-                "If the menu bar icon is hidden and you want to access it again,\nlaunch Sash from your Applications folder or via Spotlight.",
+                "If the menu bar icon is hidden and you want to access it again,\nlaunch SnapGrid from your Applications folder or via Spotlight.",
             ),
             c.hide_menu_bar_icon,
             Pref::HideIcon,

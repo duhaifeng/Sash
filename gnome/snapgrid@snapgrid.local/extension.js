@@ -1,6 +1,6 @@
-// Sash backend for GNOME Shell. Wayland gives a normal program no way to move
+// SnapGrid backend for GNOME Shell. Wayland gives a normal program no way to move
 // other applications' windows or to receive global keys, so the Shell does it:
-// this extension exports local.sash.Shell on the session bus and the `sash`
+// this extension exports local.snapgrid.Shell on the session bus and the `snapgrid`
 // program drives it. It holds no snapping logic of its own.
 
 import Clutter from 'gi://Clutter';
@@ -16,19 +16,19 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-const BUS_NAME = 'local.sash.Shell';
-const OBJECT_PATH = '/local/sash/Shell';
-// Owned by the running `sash` program; the extension follows it to know when the
+const BUS_NAME = 'local.snapgrid.Shell';
+const OBJECT_PATH = '/local/snapgrid/Shell';
+// Owned by the running `snapgrid` program; the extension follows it to know when the
 // icon, shortcuts and drag handling should be live.
-const DAEMON_NAME = 'local.sash.Daemon';
-// Reported by Version(); `sash` compares it with the version it expects and asks
+const DAEMON_NAME = 'local.snapgrid.Daemon';
+// Reported by Version(); `snapgrid` compares it with the version it expects and asks
 // the user to log in again when the Shell still runs an older copy. Keep it equal
 // to EXTENSION_VERSION in src/gnome.rs and raise both when this file changes.
 const EXTENSION_VERSION = 2;
 
 const INTERFACE = `
 <node>
-  <interface name="local.sash.Shell">
+  <interface name="local.snapgrid.Shell">
     <method name="Version">
       <arg type="u" direction="out" name="version"/>
     </method>
@@ -84,7 +84,7 @@ const INTERFACE = `
       <arg type="as" direction="in" name="accelerators"/>
       <arg type="as" direction="out" name="failed"/>
     </method>
-    <!-- The status menu's content, as JSON; see SashIndicator._rebuild. -->
+    <!-- The status menu's content, as JSON; see SnapGridIndicator._rebuild. -->
     <method name="SetMenu">
       <arg type="s" direction="in" name="json"/>
     </method>
@@ -125,13 +125,13 @@ function reply(signature, values) {
     return new GLib.Variant(signature, values);
 }
 
-// The status-menu button. Sash pushes the menu's content (SetMenu) and gets the
+// The status-menu button. SnapGrid pushes the menu's content (SetMenu) and gets the
 // chosen item back as a MenuAction signal; the menu is rebuilt each time it opens
 // so it follows the active window's display and application.
-const SashIndicator = GObject.registerClass(
-class SashIndicator extends PanelMenu.Button {
+const SnapGridIndicator = GObject.registerClass(
+class SnapGridIndicator extends PanelMenu.Button {
     _init(service, iconPath) {
-        super._init(0.5, 'Sash');
+        super._init(0.5, 'SnapGrid');
         this._service = service;
         this.add_child(new St.Icon({
             gicon: Gio.icon_new_for_string(iconPath),
@@ -179,7 +179,7 @@ class SashIndicator extends PanelMenu.Button {
         const model = service.menuModel;
         this.menu.removeAll();
         if (!model) {
-            this._add('Sash is starting…', {sensitive: false});
+            this._add('SnapGrid is starting…', {sensitive: false});
             return;
         }
 
@@ -235,11 +235,11 @@ class SashIndicator extends PanelMenu.Button {
         this._add('Settings…', {activate: () => service.openPreferences()});
         this._add('Reload Settings', {activate: () => act('reload')});
         this._separate();
-        this._add('Quit Sash', {activate: () => act('quit')});
+        this._add('Quit SnapGrid', {activate: () => act('quit')});
     }
 });
 
-class SashService {
+class SnapGridService {
     constructor() {
         this.menuModel = null;
         this._extension = null;
@@ -263,8 +263,8 @@ class SashService {
         this._ownerId = Gio.bus_own_name_on_connection(
             Gio.DBus.session, BUS_NAME, Gio.BusNameOwnerFlags.NONE, null, null);
 
-        this._indicator = new SashIndicator(this, `${extension.path}/icons/sash-symbolic.svg`);
-        Main.panel.addToStatusArea('sash', this._indicator);
+        this._indicator = new SnapGridIndicator(this, `${extension.path}/icons/snapgrid-symbolic.svg`);
+        Main.panel.addToStatusArea('snapgrid', this._indicator);
         this._syncIndicator();
         this._watchId = Gio.bus_watch_name(
             Gio.BusType.SESSION, DAEMON_NAME, Gio.BusNameWatcherFlags.NONE,
@@ -334,7 +334,7 @@ class SashService {
         try {
             this.menuModel = JSON.parse(json);
         } catch (error) {
-            console.error(`sash: invalid menu: ${error}`);
+            console.error(`snapgrid: invalid menu: ${error}`);
             return;
         }
         this._syncIndicator();
@@ -362,7 +362,7 @@ class SashService {
         return MOVABLE_TYPES.includes(window.get_window_type());
     }
 
-    // The settings page (prefs.js) talks to Sash directly over D-Bus.
+    // The settings page (prefs.js) talks to SnapGrid directly over D-Bus.
     openPreferences() {
         this._extension.openPreferences();
     }
@@ -372,7 +372,7 @@ class SashService {
             this._indicator.visible = this._daemonUp && !this.menuModel?.hide_icon;
     }
 
-    // `sash` quit or died: nothing may keep swallowing its shortcuts or showing a
+    // `snapgrid` quit or died: nothing may keep swallowing its shortcuts or showing a
     // menu that goes nowhere.
     _onDaemonGone() {
         this._daemonUp = false;
@@ -570,9 +570,9 @@ class SashService {
     }
 }
 
-export default class SashExtension extends Extension {
+export default class SnapGridExtension extends Extension {
     enable() {
-        this._service = new SashService();
+        this._service = new SnapGridService();
         this._service.start(this);
     }
 

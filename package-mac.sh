@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# 在 macOS 上把 sash 打成 .app，并压缩成 zip。
+# 在 macOS 上把 snapgrid 打成 .app，并压缩成 zip。
 # 程序用辅助功能接口移动窗口，首次打开需要在系统设置里允许。
-# 图标使用 assets/sash.svg，和 deb 包是同一张图。
+# 图标使用 assets/snapgrid.svg，和 deb 包是同一张图。
 # 用法：./package-mac.sh
-# 产物：dist/Sash.app
-#       dist/sash_<版本>_macos_<架构>.zip
+# 产物：dist/SnapGrid.app
+#       dist/snapgrid_<版本>_macos_<架构>.zip
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -29,7 +29,7 @@ if [ -z "$version" ]; then
 fi
 
 arch=$(uname -m)
-svg="$root/assets/sash.svg"
+svg="$root/assets/snapgrid.svg"
 if [ ! -f "$svg" ]; then
   printf '找不到图标：%s\n' "$svg" >&2
   exit 1
@@ -37,19 +37,19 @@ fi
 
 printf '正在编译发布版本…\n'
 cargo build --release --locked
-bin="$root/target/release/sash"
+bin="$root/target/release/snapgrid"
 
-app="$root/dist/Sash.app"
+app="$root/dist/SnapGrid.app"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 
-install -m 0755 "$bin" "$app/Contents/MacOS/sash"
-strip -x "$app/Contents/MacOS/sash" 2>/dev/null || true
+install -m 0755 "$bin" "$app/Contents/MacOS/snapgrid"
+strip -x "$app/Contents/MacOS/snapgrid" 2>/dev/null || true
 
 icon_tmp=$(mktemp -d)
 trap 'rm -rf "$icon_tmp"' EXIT
 qlmanage -t -s 1024 -o "$icon_tmp" "$svg" >/dev/null
-master="$icon_tmp/sash.svg.png"
+master="$icon_tmp/snapgrid.svg.png"
 if [ ! -f "$master" ]; then
   printf '无法从 SVG 生成图标\n' >&2
   exit 1
@@ -83,17 +83,17 @@ cat > "$app/Contents/Info.plist" <<EOF
   <key>CFBundleDevelopmentRegion</key>
   <string>zh_CN</string>
   <key>CFBundleDisplayName</key>
-  <string>Sash</string>
+  <string>SnapGrid</string>
   <key>CFBundleExecutable</key>
-  <string>sash</string>
+  <string>snapgrid</string>
   <key>CFBundleIconFile</key>
   <string>AppIcon</string>
   <key>CFBundleIdentifier</key>
-  <string>local.sash.linux</string>
+  <string>local.snapgrid</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>Sash</string>
+  <string>SnapGrid</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -115,7 +115,7 @@ if command -v codesign >/dev/null 2>&1; then
   codesign --force --deep --sign - "$app"
 fi
 
-zip="$root/dist/sash_${version}_macos_${arch}.zip"
+zip="$root/dist/snapgrid_${version}_macos_${arch}.zip"
 rm -f "$zip"
 ditto -c -k --keepParent "$app" "$zip"
 printf '已生成 %s\n' "$app"

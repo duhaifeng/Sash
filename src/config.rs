@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::geometry::{ActivationTuning, Spacing};
 use crate::model::CommandSet;
 
-/// User preferences read from `~/.config/sash/config.toml`.
+/// User preferences read from `~/.config/snapgrid/config.toml`.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Config {
@@ -26,7 +26,7 @@ pub struct Config {
     /// shows the settings window.
     pub hide_menu_bar_icon: bool,
     pub highlight: Highlight,
-    /// WM_CLASS instance or class names of applications Sash leaves alone.
+    /// WM_CLASS instance or class names of applications SnapGrid leaves alone.
     pub ignored_apps: Vec<String>,
     /// Command definitions replacing the built-in set.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -92,11 +92,41 @@ impl Config {
     pub const EXAMPLE: &'static str = include_str!("../assets/config.example.toml");
 
     pub fn default_path() -> Option<PathBuf> {
-        let base = std::env::var_os("XDG_CONFIG_HOME")
+        Some(Self::config_base()?.join("snapgrid").join("config.toml"))
+    }
+
+    fn config_base() -> Option<PathBuf> {
+        std::env::var_os("XDG_CONFIG_HOME")
             .map(PathBuf::from)
-            .filter(|p| p.is_absolute())
-            .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))?;
-        Some(base.join("sash").join("config.toml"))
+            .filter(|path| path.is_absolute())
+            .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")))
+    }
+
+    /// Moves `~/.config/sash` to `~/.config/snapgrid` once. The old directory is
+    /// the one written before this program was renamed. Absolute paths inside
+    /// the preferences file are rewritten to match.
+    fn migrate_previous_config() {
+        let Some(base) = Self::config_base() else {
+            return;
+        };
+        let current = base.join("snapgrid");
+        let previous = base.join("sash");
+        if current.exists() || !previous.is_dir() {
+            return;
+        }
+        if std::fs::rename(&previous, &current).is_err() {
+            return;
+        }
+        let file = current.join("config.toml");
+        let Ok(text) = std::fs::read_to_string(&file) else {
+            return;
+        };
+        let from = format!("{}/", previous.display());
+        let to = format!("{}/", current.display());
+        let updated = text.replace(&from, &to);
+        if updated != text {
+            let _ = std::fs::write(&file, updated);
+        }
     }
 
     /// Writes the preferences to the file they were read from, or the default
@@ -112,7 +142,7 @@ impl Config {
         write_with_backup(
             &file,
             &format!(
-                "# Written by Sash when a setting changes; comments are not kept.\n\
+                "# Written by SnapGrid when a setting changes; comments are not kept.\n\
                  # The previous file is saved once as {}.bak.\n{text}",
                 file.file_name()
                     .map_or_else(String::new, |n| n.to_string_lossy().into_owned())
@@ -181,6 +211,9 @@ impl Config {
 
     /// Loads `path`, or the default location when it exists; otherwise defaults.
     pub fn load(path: Option<&Path>) -> anyhow::Result<Self> {
+        if path.is_none() {
+            Self::migrate_previous_config();
+        }
         let mut config = Self::load_preferences(path)?;
         let base = config.path.clone().or_else(Self::default_path);
         config.user_ignored = base
@@ -407,7 +440,7 @@ mod tests {
     fn sets_one_preference_by_name() {
         let mut config = Config {
             user_ignored: vec!["firefox".into()],
-            path: Some("/tmp/sash/config.toml".into()),
+            path: Some("/tmp/snapgrid/config.toml".into()),
             ..Config::default()
         };
         config.set_preference("padding", json!(12)).unwrap();

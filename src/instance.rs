@@ -1,6 +1,6 @@
-//! One running Sash per user. Every Linux backend (X11, GNOME Shell) shares it, so
+//! One running SnapGrid per user. Every Linux backend (X11, GNOME Shell) shares it, so
 //! a second start, from the application menu for instance, cannot leave two
-//! copies grabbing shortcuts, and quitting Sash really stops everything the user
+//! copies grabbing shortcuts, and quitting SnapGrid really stops everything the user
 //! was seeing.
 
 use std::io::ErrorKind;
@@ -15,17 +15,16 @@ use anyhow::Context;
 /// stale file can lock the next start out.
 pub struct Instance(#[allow(dead_code)] UnixListener);
 
-/// Takes the per-user instance name. `None` means another Sash already holds it.
+/// Takes the per-user instance name. `None` means another SnapGrid already holds it.
 pub fn acquire() -> anyhow::Result<Option<Instance>> {
     let uid = std::fs::metadata("/proc/self")
         .context("reading /proc/self")?
         .uid();
-    acquire_named(&format!("sash.instance.{uid}"))
+    acquire_named(&format!("snapgrid.instance.{uid}"))
 }
 
 fn acquire_named(name: &str) -> anyhow::Result<Option<Instance>> {
-    let address =
-        SocketAddr::from_abstract_name(name).context("building the instance address")?;
+    let address = SocketAddr::from_abstract_name(name).context("building the instance address")?;
     match UnixListener::bind_addr(&address) {
         Ok(listener) => Ok(Some(Instance(listener))),
         Err(error) if error.kind() == ErrorKind::AddrInUse => Ok(None),
@@ -39,8 +38,8 @@ mod tests {
 
     #[test]
     fn a_second_holder_is_refused_until_the_first_lets_go() {
-        // Not the real name: a Sash that is running must not fail the test.
-        let name = format!("sash.instance.test.{}", std::process::id());
+        // Not the real name: a SnapGrid that is running must not fail the test.
+        let name = format!("snapgrid.instance.test.{}", std::process::id());
         let first = acquire_named(&name).unwrap();
         assert!(first.is_some());
         assert!(acquire_named(&name).unwrap().is_none());

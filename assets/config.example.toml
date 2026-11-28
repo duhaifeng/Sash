@@ -1,4 +1,4 @@
-# Sash — copy to ~/.config/sash/config.toml and edit.
+# SnapGrid — copy to ~/.config/snapgrid/config.toml and edit.
 
 # Snap windows by dragging them to screen edges and corners.
 snap_windows = true
@@ -20,7 +20,7 @@ ignored_apps = []
 # Keep the menu bar icon hidden (macOS). Opening the app again shows the
 # settings window.
 hide_menu_bar_icon = false
-# Replace the built-in commands; print them with `sash print-commands`.
+# Replace the built-in commands; print them with `snapgrid print-commands`.
 # commands_file = "commands.json"
 
 [highlight]

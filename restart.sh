@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 在 macOS 和 Linux 上重新编译并启动 sash。
+# 在 macOS 和 Linux 上重新编译并启动 snapgrid。
 # 用法：
 #   ./restart.sh                 调试构建并在后台管理窗口
 #   ./restart.sh --release       发布构建后再启动
@@ -40,16 +40,16 @@ stop_running() {
     return 0
   fi
   # 只结束本仓库编译出来的进程，避免误杀其他同名程序。
-  # magnet 是改名之前的二进制，一起停掉，避免和 sash 抢同一套快捷键。
-  pids=$(pgrep -f "$root/target/(debug|release)/(sash|magnet)( |$)" || true)
+  # sash 和 magnet 是改名之前的二进制，一起停掉，避免和 snapgrid 抢同一套快捷键。
+  pids=$(pgrep -f "$root/target/(debug|release)/(snapgrid|sash|magnet)( |$)" || true)
   if [ -z "$pids" ]; then
     return 0
   fi
-  printf '停止已在运行的 sash：%s\n' "$pids"
+  printf '停止已在运行的 snapgrid：%s\n' "$pids"
   # shellcheck disable=SC2086
   kill $pids 2>/dev/null || true
   sleep 0.4
-  pids=$(pgrep -f "$root/target/(debug|release)/(sash|magnet)( |$)" || true)
+  pids=$(pgrep -f "$root/target/(debug|release)/(snapgrid|sash|magnet)( |$)" || true)
   if [ -n "$pids" ]; then
     # shellcheck disable=SC2086
     kill -9 $pids 2>/dev/null || true
@@ -63,6 +63,6 @@ printf '正在编译（%s）…\n' "$profile"
 # shellcheck disable=SC2086
 cargo build $cargo_args
 
-bin="$root/target/$profile/sash"
+bin="$root/target/$profile/snapgrid"
 printf '启动 %s\n' "$bin"
 exec "$bin" "$@"

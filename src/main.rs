@@ -18,7 +18,7 @@ use std::path::PathBuf;
 #[cfg(not(target_os = "macos"))]
 use std::time::Duration;
 
-/// How long a background Sash waits for the GNOME Shell extension to appear.
+/// How long a background SnapGrid waits for the GNOME Shell extension to appear.
 #[cfg(not(target_os = "macos"))]
 const GNOME_EXTENSION_WAIT: Duration = Duration::from_secs(30);
 
@@ -32,7 +32,7 @@ use crate::model::{Action, Axis};
 #[derive(Parser)]
 #[command(version)]
 struct Cli {
-    /// Preferences file (default: ~/.config/sash/config.toml).
+    /// Preferences file (default: ~/.config/snapgrid/config.toml).
     #[arg(long, global = true)]
     config: Option<PathBuf>,
     #[command(subcommand)]
@@ -43,7 +43,7 @@ struct Cli {
 enum Cmd {
     /// Run in the background: global shortcuts and drag-to-snap (default).
     Run,
-    /// Apply one command to the active window, e.g. `sash apply left-third`.
+    /// Apply one command to the active window, e.g. `snapgrid apply left-third`.
     Apply { name: String },
     /// List commands with their shortcuts.
     List,
@@ -51,7 +51,7 @@ enum Cmd {
     PrintCommands,
     /// Print an example preferences file.
     PrintConfig,
-    /// Install and enable the GNOME Shell extension Sash needs on Wayland.
+    /// Install and enable the GNOME Shell extension SnapGrid needs on Wayland.
     #[cfg(not(target_os = "macos"))]
     InstallExtension,
 }
@@ -103,10 +103,10 @@ fn main() -> anyhow::Result<()> {
             #[cfg(not(target_os = "macos"))]
             {
                 let Some(_instance) = instance::acquire()? else {
-                    log::info!("Sash is already running; leaving it as it is");
+                    log::info!("SnapGrid is already running; leaving it as it is");
                     return Ok(());
                 };
-                // At login Sash can start before the Shell has loaded its extension.
+                // At login SnapGrid can start before the Shell has loaded its extension.
                 match gnome::session(&config, GNOME_EXTENSION_WAIT)? {
                     Some(session) => gnome::launch(session, config)?,
                     None => x11::launch(config)?,

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# 把 sash 打成 linux/amd64 的 .deb。
+# 把 snapgrid 打成 linux/amd64 的 .deb。
 # 在 Linux x86_64 上直接编译；在 macOS 或其他架构上通过 Docker 编译。
 # 用法：./package-deb.sh
-# 产物：dist/sash_<版本>_amd64.deb
+# 产物：dist/snapgrid_<版本>_amd64.deb
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -20,7 +20,7 @@ if [ -z "${DEB_MAINTAINER:-}" ]; then
   if [ -n "$name" ] && [ -n "$email" ]; then
     DEB_MAINTAINER="$name <$email>"
   else
-    DEB_MAINTAINER="sash maintainers <sash@localhost>"
+    DEB_MAINTAINER="snapgrid maintainers <snapgrid@localhost>"
   fi
 fi
 
@@ -58,7 +58,7 @@ pack_deb() {
   printf '正在为 x86_64-unknown-linux-gnu 编译发布版本…\n'
   cargo build --release --locked --target x86_64-unknown-linux-gnu
 
-  bin="$CARGO_TARGET_DIR/x86_64-unknown-linux-gnu/release/sash"
+  bin="$CARGO_TARGET_DIR/x86_64-unknown-linux-gnu/release/snapgrid"
   if [ ! -f "$bin" ]; then
     printf '没有找到编译产物：%s\n' "$bin" >&2
     exit 1
@@ -76,34 +76,34 @@ pack_deb() {
     "$stage/usr/share/applications" \
     "$stage/usr/share/icons/hicolor/scalable/apps" \
     "$stage/etc/xdg/autostart" \
-    "$stage/usr/share/gnome-shell/extensions/sash@sash.local/icons"
-  install -m 0755 "$bin" "$stage/usr/bin/sash"
-  strip --strip-unneeded "$stage/usr/bin/sash"
+    "$stage/usr/share/gnome-shell/extensions/snapgrid@snapgrid.local/icons"
+  install -m 0755 "$bin" "$stage/usr/bin/snapgrid"
+  strip --strip-unneeded "$stage/usr/bin/snapgrid"
 
-  cat > "$stage/usr/share/applications/sash.desktop" <<'EOF'
+  cat > "$stage/usr/share/applications/snapgrid.desktop" <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=Sash
+Name=SnapGrid
 GenericName=Window Tiling
 Comment=用快捷键或拖拽把窗口吸附到屏幕分区
-Exec=sash
-Icon=sash
+Exec=snapgrid
+Icon=snapgrid
 Terminal=false
 Categories=Utility;
 Keywords=window;tiling;snap;
 StartupNotify=false
 EOF
-  install -m 0644 "$stage/usr/share/applications/sash.desktop" \
-    "$stage/etc/xdg/autostart/sash.desktop"
+  install -m 0644 "$stage/usr/share/applications/snapgrid.desktop" \
+    "$stage/etc/xdg/autostart/snapgrid.desktop"
 
-  install -m 0644 "$root/assets/sash.svg" \
-    "$stage/usr/share/icons/hicolor/scalable/apps/sash.svg"
+  install -m 0644 "$root/assets/snapgrid.svg" \
+    "$stage/usr/share/icons/hicolor/scalable/apps/snapgrid.svg"
 
   # GNOME Wayland 后端用的 Shell 扩展。装成系统级，所有用户登录后都能加载；
   # postinst 负责为已有用户启用它。
-  ext_src="$root/gnome/sash@sash.local"
-  ext_dst="$stage/usr/share/gnome-shell/extensions/sash@sash.local"
-  for f in metadata.json extension.js prefs.js icons/sash-symbolic.svg; do
+  ext_src="$root/gnome/snapgrid@snapgrid.local"
+  ext_dst="$stage/usr/share/gnome-shell/extensions/snapgrid@snapgrid.local"
+  for f in metadata.json extension.js prefs.js icons/snapgrid-symbolic.svg; do
     install -m 0644 "$ext_src/$f" "$ext_dst/$f"
   done
   install -m 0755 "$root/assets/deb/postinst" "$stage/DEBIAN/postinst"
@@ -118,9 +118,9 @@ EOF
     # debian/control in the current directory. Give it a minimal one.
     shlibs_dir=$(mktemp -d)
     mkdir "$shlibs_dir/debian"
-    printf 'Source: sash\nSection: x11\nPriority: optional\nMaintainer: sash\n\nPackage: sash\nArchitecture: amd64\nDescription: sash\n' \
+    printf 'Source: snapgrid\nSection: x11\nPriority: optional\nMaintainer: snapgrid\n\nPackage: snapgrid\nArchitecture: amd64\nDescription: snapgrid\n' \
       > "$shlibs_dir/debian/control"
-    shlibs_out=$(cd "$shlibs_dir" && dpkg-shlibdeps --ignore-missing-info -O "$stage/usr/bin/sash" 2>"$shlibs_err")
+    shlibs_out=$(cd "$shlibs_dir" && dpkg-shlibdeps --ignore-missing-info -O "$stage/usr/bin/snapgrid" 2>"$shlibs_err")
     shlibs_status=$?
     rm -rf "$shlibs_dir"
     set -e
@@ -136,8 +136,10 @@ EOF
   fi
 
   installed_size=$(du -sk "$stage" | awk '{print $1}')
+  # 0.1.0 的包名是 sash，和 Ubuntu 自带的独立 shell（目前 3.8）撞名。
+  # 只替换 1.0 之前的那个包，不动系统里的 sash。
   cat > "$stage/DEBIAN/control" <<EOF
-Package: sash
+Package: snapgrid
 Version: $version
 Section: x11
 Priority: optional
@@ -145,16 +147,18 @@ Architecture: amd64
 Maintainer: $DEB_MAINTAINER
 Installed-Size: $installed_size
 Depends: $shlibs
+Conflicts: sash (<< 1.0)
+Replaces: sash (<< 1.0)
 Description: snap windows by shortcut or by dragging
  把窗口吸附到半屏、三分之一和角落。支持 X11（需遵循 EWMH 的窗口管理器）和
  GNOME Wayland（自带 Shell 扩展，安装后重新登录一次即可加载）。
- 安装后会在登录时自动启动。
+ 安装后会在登录时自动启动。命令是 snapgrid。
 EOF
 
   mkdir -p "$root/dist"
-  out="$root/dist/sash_${version}_amd64.deb"
+  out="$root/dist/snapgrid_${version}_amd64.deb"
   # 清掉所有旧版本的 amd64 deb，dist 里只留这次生成的；不碰 macOS 的产物。
-  rm -f "$root"/dist/sash_*_amd64.deb
+  rm -f "$root"/dist/snapgrid_*_amd64.deb "$root"/dist/sash_*_amd64.deb
   deb_args=
   if dpkg-deb --help 2>&1 | grep -q root-owner-group; then
     deb_args=--root-owner-group
@@ -184,7 +188,7 @@ run_in_docker() {
     -e DEB_MAINTAINER="$DEB_MAINTAINER" \
     -e HOST_UID="$(id -u)" \
     -e HOST_GID="$(id -g)" \
-    -e CARGO_TARGET_DIR=/tmp/sash-target \
+    -e CARGO_TARGET_DIR=/tmp/snapgrid-target \
     -v "$root/Cargo.toml:/work/Cargo.toml:ro" \
     -v "$root/Cargo.lock:/work/Cargo.lock:ro" \
     -v "$root/src:/work/src:ro" \
@@ -192,8 +196,8 @@ run_in_docker() {
     -v "$root/gnome:/work/gnome:ro" \
     -v "$root/package-deb.sh:/work/package-deb.sh:ro" \
     -v "$root/dist:/work/dist" \
-    -v sash-cargo-registry:/usr/local/cargo/registry \
-    -v sash-cargo-git:/usr/local/cargo/git \
+    -v snapgrid-cargo-registry:/usr/local/cargo/registry \
+    -v snapgrid-cargo-git:/usr/local/cargo/git \
     -w /work \
     rust:1-bookworm \
     bash /work/package-deb.sh --inside

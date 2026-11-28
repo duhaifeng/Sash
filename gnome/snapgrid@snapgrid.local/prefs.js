@@ -1,5 +1,5 @@
-// Sash settings. This runs in the Extensions app, not in the Shell: every
-// change goes to the running `sash` over D-Bus (local.sash.Daemon), which
+// SnapGrid settings. This runs in the Extensions app, not in the Shell: every
+// change goes to the running `snapgrid` over D-Bus (local.snapgrid.Daemon), which
 // applies it at once and writes config.toml / the commands file.
 
 import Adw from 'gi://Adw';
@@ -10,9 +10,9 @@ import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-const NAME = 'local.sash.Daemon';
-const PATH = '/local/sash/Daemon';
-const IFACE = 'local.sash.Daemon';
+const NAME = 'local.snapgrid.Daemon';
+const PATH = '/local/snapgrid/Daemon';
+const IFACE = 'local.snapgrid.Daemon';
 const REPLY = new GLib.VariantType('(s)');
 const TIMEOUT_MS = 15000;
 const DEBOUNCE_MS = 300;
@@ -185,7 +185,7 @@ class GridPicker {
     }
 }
 
-// Keys as Sash names them, and the modifiers, from a key press.
+// Keys as SnapGrid names them, and the modifiers, from a key press.
 function shortcutFromKey(widget, controller, keycode, state) {
     const mods = [];
     if (state & Gdk.ModifierType.CONTROL_MASK)
@@ -224,14 +224,14 @@ class Preferences {
         });
     }
 
-    // --- talking to Sash -------------------------------------------------
+    // --- talking to SnapGrid -------------------------------------------------
 
     toast(text) {
         this._window.add_toast(new Adw.Toast({title: text, timeout: 6}));
     }
 
     // Runs requests one after another, so that changes arrive in the order they
-    // were made. A failed request shows why and brings back what Sash really has.
+    // were made. A failed request shows why and brings back what SnapGrid really has.
     send(method, args, {reload = false} = {}) {
         this._chain = this._chain.then(async () => {
             try {
@@ -271,7 +271,7 @@ class Preferences {
             try {
                 askSync(method, args);
             } catch (error) {
-                console.error(`Sash: ${messageOf(error)}`);
+                console.error(`SnapGrid: ${messageOf(error)}`);
             }
         }
         this._pending.clear();
@@ -338,7 +338,7 @@ class Preferences {
     // --- pages -----------------------------------------------------------
 
     _offlinePage(failure) {
-        const page = new Adw.PreferencesPage({title: 'Sash', icon_name: 'preferences-system-symbolic'});
+        const page = new Adw.PreferencesPage({title: 'SnapGrid', icon_name: 'preferences-system-symbolic'});
         const group = new Adw.PreferencesGroup();
         const retry = new Gtk.Button({label: 'Try Again', halign: Gtk.Align.CENTER});
         retry.add_css_class('suggested-action');
@@ -346,8 +346,8 @@ class Preferences {
         retry.connect('clicked', () => this.reload());
         group.add(new Adw.StatusPage({
             icon_name: 'dialog-warning-symbolic',
-            title: 'Sash Is Not Running',
-            description: `Start sash, then try again.\n${failure ?? ''}`,
+            title: 'SnapGrid Is Not Running',
+            description: `Start snapgrid, then try again.\n${failure ?? ''}`,
             child: retry,
         }));
         page.add(group);
@@ -438,8 +438,8 @@ class Preferences {
         page.add(preview);
 
         const icon = new Adw.PreferencesGroup({title: 'Top Bar'});
-        this._switchRow(icon, 'Hide the Sash Icon',
-            'These settings stay reachable with: gnome-extensions prefs sash@sash.local', 'hide_menu_bar_icon');
+        this._switchRow(icon, 'Hide the SnapGrid Icon',
+            'These settings stay reachable with: gnome-extensions prefs snapgrid@snapgrid.local', 'hide_menu_bar_icon');
         page.add(icon);
 
         page.add(this._ignoredGroup());
@@ -465,7 +465,7 @@ class Preferences {
     _ignoredGroup() {
         const group = new Adw.PreferencesGroup({
             title: 'Ignored Applications',
-            description: 'Sash leaves the windows of these applications alone. Use the window class, ' +
+            description: 'SnapGrid leaves the windows of these applications alone. Use the window class, ' +
                 'for example org.gnome.TextEditor. The menu\'s Ignore item adds to this list too.',
         });
         const fromPreferences = this.data.ignored.preferences;
@@ -749,10 +749,10 @@ class Preferences {
     }
 }
 
-export default class SashPreferences extends ExtensionPreferences {
+export default class SnapGridPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         window.set_default_size(760, 820);
-        window._sashPreferences = new Preferences(window);
-        return window._sashPreferences.reload();
+        window._snapgridPreferences = new Preferences(window);
+        return window._snapgridPreferences.reload();
     }
 }

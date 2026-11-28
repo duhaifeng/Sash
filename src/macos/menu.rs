@@ -63,9 +63,9 @@ pub(super) fn rebuild(menu: &NSMenu, mtm: MainThreadMarker, target: &AppDelegate
 
     menu.addItem(&NSMenuItem::separatorItem(mtm));
     add(menu, "Settings…", Some(sel!(openSettings:)), target);
-    add(menu, "About Sash", Some(sel!(showAbout:)), target);
+    add(menu, "About SnapGrid", Some(sel!(showAbout:)), target);
     menu.addItem(&NSMenuItem::separatorItem(mtm));
-    let quit = add(menu, "Quit Sash", Some(sel!(terminate:)), target);
+    let quit = add(menu, "Quit SnapGrid", Some(sel!(terminate:)), target);
     // `terminate:` belongs to NSApplication; the delegate does not implement it,
     // so an item targeting the delegate would be disabled.
     unsafe { quit.setTarget(Some(&NSApplication::sharedApplication(mtm))) };
@@ -159,13 +159,13 @@ pub(super) fn install_main_menu(mtm: MainThreadMarker, target: &AppDelegate) {
         bar.addItem(&holder);
     };
     submenu(
-        "Sash",
+        "SnapGrid",
         &[
-            ("About Sash", Some(sel!(showAbout:)), "", true),
+            ("About SnapGrid", Some(sel!(showAbout:)), "", true),
             ("", None, "", false),
             ("Settings…", Some(sel!(openSettings:)), ",", true),
             ("", None, "", false),
-            ("Quit Sash", Some(sel!(terminate:)), "q", false),
+            ("Quit SnapGrid", Some(sel!(terminate:)), "q", false),
         ],
     );
     submenu("File", &[("Close", Some(sel!(performClose:)), "w", false)]);

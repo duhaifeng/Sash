@@ -1,6 +1,6 @@
 //! GNOME Shell on Wayland. A Wayland client cannot move other applications'
-//! windows or receive global keys, so the `gnome/sash@sash.local` Shell
-//! extension does both and this module drives it over D-Bus (`local.sash.Shell`).
+//! windows or receive global keys, so the `gnome/snapgrid@snapgrid.local` Shell
+//! extension does both and this module drives it over D-Bus (`local.snapgrid.Shell`).
 
 use std::cell::{Cell, OnceCell, RefCell};
 use std::collections::HashMap;
@@ -23,15 +23,17 @@ use crate::shortcut::Shortcut;
 
 mod service;
 
-const BUS_NAME: &str = "local.sash.Shell";
-const OBJECT_PATH: &str = "/local/sash/Shell";
-const INTERFACE: &str = "local.sash.Shell";
-/// Owned while `sash` runs; the extension shows the status icon only then, and
-/// its settings page talks to Sash through the object served on it.
-const DAEMON_NAME: &str = "local.sash.Daemon";
-const DAEMON_PATH: &str = "/local/sash/Daemon";
+const BUS_NAME: &str = "local.snapgrid.Shell";
+const OBJECT_PATH: &str = "/local/snapgrid/Shell";
+const INTERFACE: &str = "local.snapgrid.Shell";
+/// Owned while `snapgrid` runs; the extension shows the status icon only then, and
+/// its settings page talks to SnapGrid through the object served on it.
+const DAEMON_NAME: &str = "local.snapgrid.Daemon";
+const DAEMON_PATH: &str = "/local/snapgrid/Daemon";
 
-const EXTENSION_UUID: &str = "sash@sash.local";
+const EXTENSION_UUID: &str = "snapgrid@snapgrid.local";
+/// Extension id from before the rename. Dropped so that copy does not keep the shortcuts.
+const PREVIOUS_EXTENSION_UUID: &str = "sash@sash.local";
 /// Where the Debian package puts the extension for every user. The Shell reads
 /// it at login, and a copy in the user's own directory would override it.
 const SYSTEM_EXTENSION_DIR: &str = "/usr/share/gnome-shell/extensions";
@@ -39,10 +41,11 @@ const SYSTEM_EXTENSION_DIR: &str = "/usr/share/gnome-shell/extensions";
 /// `EXTENSION_VERSION` in `extension.js` whenever the extension changes: a Shell
 /// that still runs an older copy only learns the new one at the next login.
 const EXTENSION_VERSION: u32 = 2;
-const EXTENSION_METADATA: &str = include_str!("../gnome/sash@sash.local/metadata.json");
-const EXTENSION_SCRIPT: &str = include_str!("../gnome/sash@sash.local/extension.js");
-const EXTENSION_PREFS: &str = include_str!("../gnome/sash@sash.local/prefs.js");
-const EXTENSION_ICON: &str = include_str!("../gnome/sash@sash.local/icons/sash-symbolic.svg");
+const EXTENSION_METADATA: &str = include_str!("../gnome/snapgrid@snapgrid.local/metadata.json");
+const EXTENSION_SCRIPT: &str = include_str!("../gnome/snapgrid@snapgrid.local/extension.js");
+const EXTENSION_PREFS: &str = include_str!("../gnome/snapgrid@snapgrid.local/prefs.js");
+const EXTENSION_ICON: &str =
+    include_str!("../gnome/snapgrid@snapgrid.local/icons/snapgrid-symbolic.svg");
 
 /// `exists, reserved, instance, class, x, y, w, h` as the extension reports a window.
 type WindowInfo = (bool, bool, String, String, i32, i32, i32, i32);
@@ -57,7 +60,7 @@ enum Preference {
 }
 
 fn preference() -> Preference {
-    match std::env::var("SASH_BACKEND").as_deref() {
+    match std::env::var("SNAPGRID_BACKEND").as_deref() {
         Ok("gnome") => Preference::Gnome,
         Ok("x11") => Preference::X11,
         _ => Preference::Auto,
@@ -73,9 +76,9 @@ fn is_gnome_wayland() -> bool {
     wayland && gnome
 }
 
-/// The GNOME Shell session to use, or `None` to use X11. `SASH_BACKEND=gnome`
+/// The GNOME Shell session to use, or `None` to use X11. `SNAPGRID_BACKEND=gnome`
 /// or `x11` overrides the choice. On a GNOME Wayland session whose extension is
-/// not running, Sash warns and falls back to X11 (XWayland).
+/// not running, SnapGrid warns and falls back to X11 (XWayland).
 pub fn session(config: &Config, patience: Duration) -> anyhow::Result<Option<GnomeSession>> {
     match preference() {
         Preference::X11 => Ok(None),
@@ -162,18 +165,29 @@ impl GnomeSession {
         if let Some(error) = failure {
             let message = match setup.unwrap_or_else(prepare_extension) {
                 Ok(true) => {
-                    desktop_notify("Sash", "Log out and back in once to finish setting up Sash.");
-                    "the Sash GNOME Shell extension is not loaded yet; log out and back in once \
-                     to finish setting up Sash"
+                    desktop_notify(
+                        "SnapGrid",
+                        "Log out and back in once to finish setting up SnapGrid.",
+                    );
+                    "the SnapGrid GNOME Shell extension is not loaded yet; log out and back in once \
+                     to finish setting up SnapGrid"
                         .to_string()
                 }
-                Ok(false) => "the Sash GNOME Shell extension is installed and enabled, but the \
-                              Shell did not load it; see `gnome-extensions info sash@sash.local` \
-                              (the extension targets GNOME Shell 50)"
-                    .to_string(),
+                Ok(false) => {
+                    desktop_notify(
+                        "SnapGrid",
+                        "Log out and back in once so GNOME loads the SnapGrid extension.",
+                    );
+                    "the SnapGrid GNOME Shell extension is installed and enabled, but the \
+                     Shell did not load it; log out and back in once. A Shell that is \
+                     already running does not see an extension installed afterward \
+                     (`gnome-extensions info snapgrid@snapgrid.local`; the extension targets \
+                     GNOME Shell 50)"
+                        .to_string()
+                }
                 Err(prepare) => format!(
-                    "the Sash GNOME Shell extension is not running and could not be enabled \
-                     ({prepare:#}); run `sash install-extension`, then log out and back in"
+                    "the SnapGrid GNOME Shell extension is not running and could not be enabled \
+                     ({prepare:#}); run `snapgrid install-extension`, then log out and back in"
                 ),
             };
             return Err(anyhow::Error::new(error).context(message));
@@ -188,11 +202,11 @@ impl GnomeSession {
             Ok(EXTENSION_VERSION) => {}
             found => {
                 warn!(
-                    "the GNOME Shell still runs an older Sash extension ({found:?}, expected \
+                    "the GNOME Shell still runs an older SnapGrid extension ({found:?}, expected \
                      {EXTENSION_VERSION}); log out and back in to load the new one"
                 );
                 self.notify(
-                    "Sash was updated",
+                    "SnapGrid was updated",
                     "Log out and back in once so GNOME loads the new version.",
                 );
             }
@@ -208,14 +222,14 @@ impl GnomeSession {
         Ok(self.proxy.call("SetShortcuts", &accelerators)?)
     }
 
-    /// Takes the name that tells the extension Sash is running, and refuses to
+    /// Takes the name that tells the extension SnapGrid is running, and refuses to
     /// start a second copy. Settings requests arrive on `events` from then on.
     fn serve(&self, events: Sender<Event>) -> anyhow::Result<()> {
         let connection = zbus::blocking::connection::Builder::session()?
             .serve_at(DAEMON_PATH, service::Service::new(events))?
             .name(DAEMON_NAME)
             .and_then(zbus::blocking::connection::Builder::build)
-            .context("Sash is already running in this session")?;
+            .context("SnapGrid is already running in this session")?;
         let _ = self.daemon_connection.set(connection);
         Ok(())
     }
@@ -290,7 +304,7 @@ enum Event {
     Settings(Request, SyncSender<Result<String, String>>),
 }
 
-/// What the settings page asks Sash to do.
+/// What the settings page asks SnapGrid to do.
 enum Request {
     Get,
     /// A preference by its `config.toml` name, and its value as JSON.
@@ -565,7 +579,7 @@ fn apply_commands(
     Ok(refused)
 }
 
-/// Saves the preferences and applies what the running Sash holds in memory.
+/// Saves the preferences and applies what the running SnapGrid holds in memory.
 fn apply_preferences(daemon: &mut Daemon<GnomeSession>, previous: Config) -> anyhow::Result<()> {
     if let Err(error) = daemon.c.config.save() {
         daemon.c.config = previous;
@@ -687,11 +701,13 @@ fn menu_action(
     let result = run_menu_action(daemon, shortcuts, &menu);
     daemon.c.session.pinned.set(None);
     match result {
-        Ok(()) if menu.action == "reload" => daemon.c.session.notify("Sash", "Settings reloaded"),
+        Ok(()) if menu.action == "reload" => {
+            daemon.c.session.notify("SnapGrid", "Settings reloaded")
+        }
         Ok(()) => {}
         Err(error) => {
             warn!("{error:#}");
-            daemon.c.session.notify("Sash", &format!("{error:#}"));
+            daemon.c.session.notify("SnapGrid", &format!("{error:#}"));
         }
     }
 }
@@ -701,7 +717,7 @@ pub fn launch(session: GnomeSession, config: Config) -> anyhow::Result<()> {
     session.listen(tx.clone())?;
     session.serve(tx)?;
     session.check_extension_version();
-    let mut daemon = Daemon::start(session, config).context("starting Sash")?;
+    let mut daemon = Daemon::start(session, config).context("starting SnapGrid")?;
     let mut shortcuts = register(&daemon)?.0;
     loop {
         let mut batch = vec![events.recv().context("lost the GNOME Shell connection")?];
@@ -744,13 +760,27 @@ pub fn launch(session: GnomeSession, config: Config) -> anyhow::Result<()> {
     }
 }
 
-fn user_extension_dir() -> anyhow::Result<PathBuf> {
+fn user_extension_dir_for(uuid: &str) -> anyhow::Result<PathBuf> {
     let data_home = std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)
         .filter(|path| path.is_absolute())
         .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share")))
         .context("neither XDG_DATA_HOME nor HOME is set")?;
-    Ok(data_home.join("gnome-shell/extensions").join(EXTENSION_UUID))
+    Ok(data_home.join("gnome-shell/extensions").join(uuid))
+}
+
+fn user_extension_dir() -> anyhow::Result<PathBuf> {
+    user_extension_dir_for(EXTENSION_UUID)
+}
+
+/// Removes the user copy installed under the previous name.
+fn retire_previous_extension() -> anyhow::Result<bool> {
+    let dir = user_extension_dir_for(PREVIOUS_EXTENSION_UUID)?;
+    if !dir.exists() {
+        return Ok(false);
+    }
+    std::fs::remove_dir_all(&dir).with_context(|| format!("removing {}", dir.display()))?;
+    Ok(true)
 }
 
 /// Whether the Debian package (or an administrator) installed the extension for all users.
@@ -771,14 +801,13 @@ fn write_user_extension(dir: &std::path::Path) -> anyhow::Result<bool> {
         ("metadata.json", EXTENSION_METADATA),
         ("extension.js", EXTENSION_SCRIPT),
         ("prefs.js", EXTENSION_PREFS),
-        ("icons/sash-symbolic.svg", EXTENSION_ICON),
+        ("icons/snapgrid-symbolic.svg", EXTENSION_ICON),
     ] {
         let path = dir.join(name);
         if std::fs::read_to_string(&path).is_ok_and(|current| current == contents) {
             continue;
         }
-        std::fs::write(&path, contents)
-            .with_context(|| format!("writing {}", path.display()))?;
+        std::fs::write(&path, contents).with_context(|| format!("writing {}", path.display()))?;
         changed = true;
     }
     Ok(changed)
@@ -791,7 +820,7 @@ fn write_user_extension(dir: &std::path::Path) -> anyhow::Result<bool> {
 /// to change, which means a login is needed.
 fn prepare_extension() -> anyhow::Result<bool> {
     let user_dir = user_extension_dir()?;
-    let mut changed = false;
+    let mut changed = retire_previous_extension()?;
     if system_extension_installed() {
         if user_dir.exists() {
             std::fs::remove_dir_all(&user_dir)
@@ -822,7 +851,7 @@ pub fn install_extension() -> anyhow::Result<()> {
         .output();
     println!(
         "Enabled. GNOME Shell on Wayland cannot be restarted: log out and back in to load the \
-         extension (also after updating it), then run `sash`."
+         extension (also after updating it), then run `snapgrid`."
     );
     Ok(())
 }
@@ -844,10 +873,15 @@ fn enable_in_settings() -> anyhow::Result<bool> {
     };
     let current = gsettings(&["get", "org.gnome.shell", "enabled-extensions"])?;
     let mut ids: Vec<&str> = current.split('\'').skip(1).step_by(2).collect();
-    if ids.contains(&EXTENSION_UUID) {
+    let had_previous = ids.iter().any(|id| *id == PREVIOUS_EXTENSION_UUID);
+    ids.retain(|id| *id != PREVIOUS_EXTENSION_UUID);
+    let missing = !ids.contains(&EXTENSION_UUID);
+    if !had_previous && !missing {
         return Ok(false);
     }
-    ids.push(EXTENSION_UUID);
+    if missing {
+        ids.push(EXTENSION_UUID);
+    }
     let value = format!(
         "[{}]",
         ids.iter()
@@ -869,9 +903,9 @@ fn desktop_notify(title: &str, body: &str) {
             Some("org.freedesktop.Notifications"),
             "Notify",
             &(
-                "Sash",
+                "SnapGrid",
                 0u32,
-                "sash",
+                "snapgrid",
                 title,
                 body,
                 Vec::<&str>::new(),

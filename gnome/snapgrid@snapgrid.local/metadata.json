@@ -1,0 +1,7 @@
+{
+  "uuid": "snapgrid@snapgrid.local",
+  "name": "SnapGrid",
+  "description": "Window snapping backend for SnapGrid. Lets the snapgrid program move windows, grab global shortcuts and watch window drags on GNOME Wayland.",
+  "shell-version": ["50"],
+  "session-modes": ["user", "unlock-dialog"]
+}
